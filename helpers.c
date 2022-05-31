@@ -129,3 +129,8 @@ char *basic_extract_json_response(char *str)
 {
     return strstr(str, "{\"");
 }
+
+char *array_extract_json_response(char *str)
+{
+    return strstr(str, "[\"");
+}

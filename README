@@ -1,0 +1,130 @@
+                     _____                      _____ 
+                    │_   _│__ _ __ ___   __ _  │___ / 
+                      │ │/ _ \ '_ ` _ \ / _` │   │_ \ 
+                      │ │  __/ │ │ │ │ │ (_│ │  ___) │
+                      │_│\___│_│ │_│ │_│\__,_│ │____/
+TROHIN CRISTINA, 322CB                     
+---------------------------------------------------------------------------------
+                                DESCRIERE
+---------------------------------------------------------------------------------
+Tema de casă nr. 3 reprezintă implementarea unui client care interacționează
+cu un server, ce expune un REST API către acesta.
+
+Clientul comunică cu serverul prin intermediul protocolului HTTP, transmițându-i
+diferite cereri: GET, POST și DELETE. La fiecare tip de cerere, pentru fiecare 
+tip de comandă în parte, serverul trimite un răspuns clientului. Mesajul are un
+format predeterminat pentru fiecare tip de cerere și e de datoria clientului să
+extragă informația în mod corect.
+
+În cadrul temei, clientul primește comenzi de la tastatură (stdin), creează un 
+mesaj destinat serverului prin atașarea de header-uri specifice pentru comanda
+primită, împreună cu valorile acestora, și trimite mesajul formatat serverului. 
+După ce serverul primește cu succes mesajul, îi trimite clientului un mesaj ca
+răspuns.
+---------------------------------------------------------------------------------
+                            FUNCȚIONALITĂȚI
+---------------------------------------------------------------------------------
+
+Clientul poate să primească una din următoarele comenzi de la tastatură:
+    - register (post)
+    - login (post)
+    - enter_library (get)
+    - get_books (get)
+    - get_book (get)
+    - add_book (post)
+    - delete_book (delete)
+    - logout (get)
+
+Întrucât tipul contentului atât trimis, cât și primit din partea serverului
+este application/json, folosesc biblioteca parson, pentru a crea răspunsuri
+de tip json și pentru a le parsa, accesându-le câmpurile la afișare. Am ales
+să folosesc biblioteca, și nu o implementare proprie, pentru că mi s-a părut
+tentantă incadrarea unui cod open-source în proiect propriu. 
+
+Atunci când clientul primește o comandă la tastatură care nu este inclusă
+în lista de comenzi acceptate, utilizatorul va fi informat de acest lucru
+prin mesajul "Invalid command".
+
+Implementarea fiecărei comenzi în parte se află în fișierul client_utils.c.
+Unele comenzi vor afișa un prompt pentru introducerea unor date, necesare 
+pentru formatarea mesajelor la oricare din următoarele tipuri:
+    - POST
+    - GET
+    - DELETE
+
+În requests.c se află implementarea pentru formatarea oricărui tip de mesaj:
+    - char *compute_post_request
+    - char *compute_get_request
+    - char *compute_delete_request
+
+Pe lângă header-urile tipice ale protocolului HTTP, în temă se folosește 
+header-ul Authorization, prin care se va transmite serverului token-ul 
+primit de pe urma accesării bibliotecii, prin comanda enter_library. 
+Astfel, prin trimiterea token-ului către server, se va demonstra că
+un anumit client are acces la bibliotecă.
+
+Comanda register va înregistra un nou cont cu credențialele username și password
+introduse de la tastatură. Se va verifica cazul în care se introduc credențiale
+care conțin spații, și în caz afirmativ se va afișa mesajul: "Invalid credentials!
+Should not contain space character!". De asemenea, se va verifica cazul în care 
+utilizatorul dorește să înregistreze un nou cont, dar este deja logat pe un cont, 
+respectiv se va afișa mesajul: "You have to log out first!". Orice alt tip de eroare, 
+cum ar fi înregistrarea unui cont cu credențiale deja existente, vor fi parsate
+din răspunsul de la server (body data de tip json), din câmpul error, și va fi 
+afișat la stdout. În caz de succes, nu va exista câmp error, și se va afișa la 
+stdout mesajul:"Your account has been successfully created!"
+
+Prin comanda de login, se va efectua logarea într-un cont deja existent. La fel 
+ca la comanda register, se vor valida credențialele întâi, și nu se va permite
+efectuarea unui login când nu s-a făcut un logout înainte. În cazul în care 
+credențialele nu se potrivesc cu nici un cont deja existent, serverul va trimite
+eroarea sub forma unui răspuns json și va fi extras, exact ca la register.
+În caz de succes, serverul va transmite clientului un cookie de sesiune, pe care
+trebuie să-l transmită mai departe serverului în caz de se dorește efectuarea
+comenzii de enter_library. În general, acel cookie de sesiune va demonstra că 
+un client este logat. Se va afișa mesajul: "You successfully logged in!", după
+extragerea cookie-ului.
+
+Pentru comanda de enter_library, se va verifica existența unui cookie de sesiune
+întâi, iar apoi existența token-ului de care am menționat mai devreme, pentru a 
+nu permite accesarea repetată a bibliotecii. Pentru cazul în care cookie-ul de sesiune
+este setat pe NULL, însemnând ca nu s-a efectuat logarea, sau s-a efectuat, dar
+s-au delogat după, se va afișa mesajul "You are not logged in!".
+Dacă comanda de enter_library a avut loc cu succes, se va transmite clientului 
+de către server acel token, care va fi accesat prin parsarea răspunsului json.
+În caz de succes, se va afișa mesajul: "Successfully entered library!"
+
+Pentru comenzile get_books, get_book, add_book, delete_book se va cere
+demonstrarea accesului la bibliotecă prin transmiterea token-ului către server. 
+Mai întâi de toate însă, se va verifica dacă se efectuează comanda atunci
+când utilizatorul este logat. 
+
+În cazul comenzii get_books, serverul va trimite clientului o listă de
+cărți, în format json. Dacă nu există cărți în bibliotecă, se va afișa
+mesajul: "No books in the library! Start adding!". Dacă însă există, se vor
+parsa cărțile și se vor afișa ID-urile acestora, asignate de server, și titlurile
+lor. 
+
+ID-urile cărților vor fi folosite pentru a vizualiza ulterior o anumită carte,
+sau pentru a șterge o anumită carte și vor fi parte componentă a url-urilor. 
+
+Pentru get_book și delete_book command se vor crea prompturi în care se va
+cere utilizatorilor să introducă ID-ul cărții. În cazul în care o carte cu 
+ID-ul introdus nu există, serverul va trimite prin json mesajul: "No book
+was found!". Dacă comanda de delete a fost efectuată cu succes, se va afișa
+mesajul: "The book has been deleted!". Pentru comanda de get_book se vor afișa
+la stdout toate detaliile despre cartea existentă în bibliotecă:
+title, author, genre, publisher, page count și ID-ul. 
+
+Pentru comanda de add_book se va crea un promt în care se vor cere de la utilizator
+detaliile despre carte menționate anterior (cu excepția ID-ului, care e asignat de
+server). Toate detaliile vor fi transformate în jsoane și vor fi tranmise serverului
+spre adăugare. În caz de succes, se va afișa mesajul: "The book has been added!".
+De asemenea, înainte să fie răspunsul trimis, se va verifica dacă valoarea 
+câmpului page_count este într-adevăr numerică. 
+
+Într-un final, comanda de logout eliberează memoria pentru token și cookie de sesiune, 
+și transmite serverului că dorește să se delogheze din cont. Dacă se va încerca
+delogarea înainte să se efectueze vreo logare înainte, se va afișa mesajul: 
+"You want to log out, but you are not logged in!". În caz de succes, se va afișa
+"You have logged out!".

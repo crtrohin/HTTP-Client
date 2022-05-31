@@ -25,4 +25,8 @@ char *receive_from_server(int sockfd);
 // extracts and returns a JSON from a server response
 char *basic_extract_json_response(char *str);
 
+// extracts and returns an array of JSONs from a server response
+char *array_extract_json_response(char *str);
+
+
 #endif
